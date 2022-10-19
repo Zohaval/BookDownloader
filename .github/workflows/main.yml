@@ -1,0 +1,93 @@
+import os
+from tkinter import filedialog
+from tkinter import *
+from tkinter.ttk import Combobox
+import requests
+import zipfile
+# 171967
+
+
+def clicked():
+    link = constructor()
+    site_response = requests.get(link)
+    header = site_response.headers.get('Content-Disposition')
+    start_name = header.find("filename=") + len("filename=")
+    name_file = header[start_name:]
+    directory_path = currentLocation.get()
+    file_path = directory_path + '/' + name_file
+    file = open(file_path, "wb")
+    file.write(site_response.content)
+    file.close()
+    if link[-3:] != "pdf" and link[-3:] != "pub":
+        file_zip = zipfile.ZipFile(file_path)
+        file_zip.extractall(directory_path)
+        file_zip.close()
+        path = os.path.join(os.path.abspath(os.path.dirname(directory_path + "/")), name_file)
+        os.remove(path)
+
+
+def insert_save():
+    path_save = filedialog.askdirectory(initialdir='C:\\Users\\zohav\\Downloads')
+    currentLocation.delete(0, END)
+    currentLocation.insert(0, path_save)
+
+
+def constructor():
+    url = "https://litportal.ru/trial/txt/"
+    return url + spot.get() + extension_dict.get(format_file.get())
+
+
+#
+extension_dict = {
+    "pdf": ".a6.pdf",
+    "txt": ".txt.zip",
+    "rtf": ".rtf.zip",
+    "epub": ".epub",
+    "fb2": ".fb2.zip"
+}
+
+# Параметры окна
+window = Tk()
+window.title("BookDownload")
+window.geometry('415x195')
+
+# Имя книги
+spot = Entry(window, width=10)
+spot.place(x=30, y=35)
+spot.place(width=135, height=30)
+
+# Выпадающий список
+format_file = Combobox(window, value=list(extension_dict.keys()),  state='readonly', font=("Arial Bold", 13))
+format_file.current(0)
+format_file.place(x=250, y=35)
+format_file.place(width=135, height=30)
+
+# Путь сохранения
+currentLocation = Entry(window, width=10)
+currentLocation.place(x=30, y=110)
+currentLocation.place(width=355, height=30)
+
+# Кнопка <Скачать>
+downloadBtn = Button(window, text="Скачать", font=("Arial Bold", 18), command=clicked)
+downloadBtn.place(x=148, y=150)
+downloadBtn.place(width=120, height=30)
+
+# Кнопка <Обзор>
+overview = Button(window, text="Обзор", font=("Arial Bold", 16), command=insert_save)
+overview.place(x=167, y=75)
+overview.place(width=80, height=28)
+
+# Текст "Тип файла"
+name_list = Label(window, text="Тип файла", font=("Arial Bold", 14))
+name_list.place(x=268, y=3)
+
+# Текст "Название"
+name_title = Label(window, text="Название", font=("Arial Bold", 14))
+name_title.place(x=52, y=3)
+window.mainloop()
+
+# https://litportal.ru/trial/txt/171967.txt
+# https://litportal.ru/trial/txt/172106.rtf.zip
+# https://litportal.ru/trial/txt/12491696.a6.pdf
+# https://litportal.ru/trial/txt/12491696.txt
+# https://litportal.ru/trial/txt/12491696.rtf.zip
